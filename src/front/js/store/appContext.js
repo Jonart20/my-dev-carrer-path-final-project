@@ -22,12 +22,18 @@ const injectContext = PassedComponent => {
 		);
 
 		useEffect(() => {
-			state.actions.fetchCareerPaths();
+			async function main_loader() {
+				await state.actions.fetchCareerPaths();
+				await state.actions.fetchSkills();
+				//await state.actions.fetchUser();
+				//await state.actions.get_all_skills();
+				state.actions.sort_skills();
+				//state.actions.add_career_link();
+			}
+
+			main_loader();
 		}, []);
 
-		// The initial value for the context is not null anymore, but the current state of this component,
-		// the context will now have a getStore, getActions and setStore functions available, because they were declared
-		// on the state of this component
 		return (
 			<Context.Provider value={state}>
 				<PassedComponent {...props} />

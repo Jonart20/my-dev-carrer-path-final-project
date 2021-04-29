@@ -29,6 +29,16 @@ def main_load():
 
 #esto no va aqui
 
+@api.route('/user/<string:id>/careerpath', methods=['GET'])
+def getUserCareerPath(id):
+    usercareerlinks = CareerLink.query.filter_by(user_id=id).all()
+    if usercareerlinks is not None:
+        skills = list(map(lambda x: SkillName.query.filter_by(id=x.skill_id).all(), usercareerlinks))
+        if skills is not None:
+            usercareerpaths = list(map(lambda x: CareerpathName.query.filter_by(id=x.careerpath_name_id).all(), skills))
+    return jsonify(usercareerpaths)
+        
+
 @api.route('/register', methods=['POST'])
 def handle_register():
 
@@ -153,6 +163,7 @@ def restore_password():
         db.session.commit()
         return jsonify({'status':'Success','msg':'The code has been send'}),200
 #---------------------------------------------
+
 @api.route('/users/recovery/<string:email>',methods=['POST'])
 def user_verification(email):
     body=request.get_json()
@@ -262,17 +273,48 @@ def add_course():
     db.session.commit()
     return jsonify(careerLink.serialize()), 200
 
+
 @api.route('/careerlink/all', methods=['GET'])
 def api_careerall():
     careerlinks = CareerLink.query.all()
     careerlinks = list(map(lambda x:x.serialize(), careerlinks))
-    return jsonify(careerlinks) 
+    return jsonify(careerlinks)
+
+@api.route('/getuser/all', methods=['GET'])
+def api_userall():
+    users = User.query.all()
+    users = list(map(lambda x:x.serialize(), users))
+    return jsonify(users) 
+
 
 @api.route('/skill/all', methods=['GET'])
 def api_skillall():
     skills = SkillName.query.all()
     skills = list(map(lambda x:x.serialize(), skills))
     return jsonify(skills) 
+
+
+@api.route('/publish-careerlinks', methods=['POST'])
+@jwt_required()
+def publish_careerlinks():
+    body=request.get_json()
+    current_user = get_jwt_identity()
+
+    #quien es la persona que esta guardando un usuario
+
+    course_name = request.json.get("course_name",None)
+    course_url = request.json.get("course_url",None)
+    skill_id= request.json.get("skill_id",None)
+
+    careerlink = CareerLink()
+    careerlink.skill_id=skill_id
+    careerlink.course_name=course_name
+    careerlink.course_link=course_url
+    careerlink.user_id=current_user
+    
+    db.session.add(careerlink)  #agrega un servicio a la base de datos
+    db.session.commit()
+    return jsonify("Career Links have been added") 
 
    
     
